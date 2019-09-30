@@ -50,7 +50,7 @@ func (ply *Ply) Elements(elem string) []PlyElement {
 	return ply.data[elem]
 }
 
-// Property returns the property value of a `PlyElement`.
+// Property returns the property value of a `PlyElement` with name `prop`.
 func (elem *PlyElement) Property(prop string) interface{} {
 	return (*elem)[prop]
 }
