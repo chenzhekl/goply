@@ -1,3 +1,4 @@
+// goply is a simple ply file loader.
 package goply
 
 import (
