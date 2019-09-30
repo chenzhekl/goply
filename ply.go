@@ -8,10 +8,14 @@ import (
 )
 import "bufio"
 
+// Ply is the struct containing ply-file-related data.
 type Ply struct {
 	schema PlySchema
-	data   map[string][]map[string]interface{}
+	data   map[string][]PlyElement
 }
+
+// PlyElement represents a single element in ply.
+type PlyElement map[string]interface{}
 
 type PlySchema struct {
 	elementNames []string
@@ -24,6 +28,7 @@ type PlyElementSchema struct {
 	propertyTypes []string
 }
 
+// New constructs a new Ply instance by parsing data from `io.Reader`.
 func New(r io.Reader) *Ply {
 	scanner := bufio.NewScanner(r)
 	scanner.Split(bufio.ScanLines)
@@ -32,12 +37,22 @@ func New(r io.Reader) *Ply {
 			elementNames: []string{},
 			elements:     []PlyElementSchema{},
 		},
-		data: map[string][]map[string]interface{}{},
+		data: map[string][]PlyElement{},
 	}
 
 	processHeader(scanner, ply)
 
 	return ply
+}
+
+// Elements return the set of elements of given name.
+func (ply *Ply) Elements(elem string) []PlyElement {
+	return ply.data[elem]
+}
+
+// Property returns the property value of a `PlyElement`.
+func (elem *PlyElement) Property(prop string) interface{} {
+	return (*elem)[prop]
 }
 
 func processHeader(scanner *bufio.Scanner, ply *Ply) {
@@ -92,13 +107,13 @@ func processHeader(scanner *bufio.Scanner, ply *Ply) {
 
 func processBody(scanner *bufio.Scanner, ply *Ply) {
 	for typeID := 0; typeID < len(ply.schema.elements); typeID++ {
-		ply.data[ply.schema.elementNames[typeID]] = make([]map[string]interface{}, ply.schema.elements[typeID].number)
+		ply.data[ply.schema.elementNames[typeID]] = make([]PlyElement, ply.schema.elements[typeID].number)
 		for elementID := 0; elementID < ply.schema.elements[typeID].number; elementID++ {
 			line, ok := getLine(scanner)
 			if !ok {
 				panic("Invalid ply file")
 			}
-			ply.data[ply.schema.elementNames[typeID]][elementID] = map[string]interface{}{}
+			ply.data[ply.schema.elementNames[typeID]][elementID] = PlyElement{}
 			cursor := 0
 			for propID, propType := range ply.schema.elements[typeID].propertyTypes {
 				if !strings.HasPrefix(propType, "list") {
